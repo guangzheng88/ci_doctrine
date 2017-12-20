@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--bootstrap:自动加载的文件路径;colors:开启颜色显示;stopOnFailure:失败是否终止程序-->
+<phpunit  bootstrap="tests/core/phpunit_bootstrap.php" verbose="true" colors="true" stopOnFailure="false">
+    <!--测试套件   
+        name： 套件名称
+        directory ：套件测试的目录，目录下一般放测试文件的用例
+               suffix :测试文件后缀，如果不填写，则默认后缀为*Test.php,即phpunit 默认会执行*Test.php  的文件
+
+               action:测试目录名
+        file：可以单独设置测试文件
+        exclude：排除不需要测试的文件-->
+    <testsuites>
+        <testsuite name="ljorder">
+            <directory suffix="Test.php">tests/</directory>
+            <!--<directory suffix="Test.php">tests/libraries/ljorder</directory>-->
+            <!-- <directory suffix="Test.php">tests/controllers/ljorder</directory> -->
+            <!--<file>tests/controllers/unit/UnitDemoTest.php</file>-->
+        </testsuite>
+    </testsuites>
+</phpunit>

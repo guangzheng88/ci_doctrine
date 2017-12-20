@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit  bootstrap="../core/phpunit_bootstrap.php" verbose="true" colors="true" stopOnFailure="false">
+    <testsuites>
+        <testsuite name="ljorder">
+            <!-- file：单独设置测试文件 -->
+            <file>../controllers/demoGetTest.php</file>
+        </testsuite>
+    </testsuites>
+    <filter>
+        <!-- 生成单元测试报告的action白名单 -->
+        <whitelist processUncoveredFilesFromWhitelist="false">
+            <!-- <file>../../../application/libraries/action/dining/CashPayAction.php</file> -->
+        </whitelist>
+    </filter>
+    <!--生成白名单中文件测试覆盖报告 target:文件所在目录;type:文件类型(xml,html,text...)-->
+    <logging>
+        <log type="coverage-html" target="../../reports/" charset="UTF-8"/>
+    </logging>
+</phpunit>
