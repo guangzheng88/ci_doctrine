@@ -1,8 +1,9 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 /**
- * 使用queryBuilder构建DQL查询
+ * 使用queryBuilder构建DQL语句
  * @function getTotal() 查询多条
  * @function getTotalNum() 查询总数
+ * @function 批量修改 $queryBuilder->update('table','t')->where($where)->set($data);
  * @author 任广正
  * @date 2017-12-11 20:38:54
  */
@@ -10,26 +11,26 @@ class QueryBuilder
 {
 	private $CI;
 	public $qb;//QueryBuilder对象
-    private $aliasDoctrine;//加载实体类使用
+	private $aliasDoctrine;//加载实体类使用
 
 	/**
 	 * 构造函数
-     * @param $doctrine 如果你需要切库的话请传入重新实例化后的doctrine对象
+	 * @param $doctrine 如果你需要切库的话请传入重新实例化后的doctrine对象
 	 */
 	public function __construct($doctrine=array())
 	{
 		$this->CI = &get_instance();
 		if(empty($doctrine))
-        {
-            //构建一个QueryBuilder对象
-            $this->aliasDoctrine = $this->CI->doctrine;
-        }else
-        {
-            //构建一个指定数据库的QueryBuilder对象
-            $this->aliasDoctrine = $doctrine[0];
+		{
+			//构建一个QueryBuilder对象
+			$this->aliasDoctrine = $this->CI->doctrine;
+		}else
+		{
+			//构建一个指定数据库的QueryBuilder对象
+			$this->aliasDoctrine = $doctrine[0];
 
-        }
-        $this->qb = $this->aliasDoctrine->em->createQueryBuilder();
+		}
+		$this->qb = $this->aliasDoctrine->em->createQueryBuilder();
 	}
 	/**
 	 * 按条件查询
@@ -96,14 +97,62 @@ class QueryBuilder
 		return intval($result[0]['totalNums']);
 	}
 	/**
+	 * 批量更新
+	 * <code>
+	 *     $qb ->update('user', 'u')
+	 *         ->where($where)
+	 *         ->set(array('u.name'=>'admin','u.pwd'=>md5(123456)));
+	 * </code>
+	 * @param $update 实体类名
+	 * @param $alias 别名
+	 * @return 受影响的行数
+	 */
+	public function update($update=null, $alias=null)
+	{
+		//加载实体类
+		$this->aliasDoctrine->requireEntity($update);
+		$this->qb->update($update,$alias);
+		return $this->qb->getQuery()->execute();
+	}
+	/**
+	 * 构建修改字段
+	 * @param $data 需要修改的数据(一维数组)
+	 */
+	public function set(array $data=array())
+	{
+		$i = 1000;
+		foreach ($data as $key=>$val)
+		{
+			$i++;
+			$this->qb->set($key,'?'.$i);
+			//绑定参数
+			$this->qb->setParameter($i,$val);
+		}
+		return $this;
+	}
+	/**
+	 * 删除操作
+	 * <code>
+	 *     $qb->where($where)->delete('user','u);
+	 * </code>
+	 */
+	public function delete($delete = null, $alias = null)
+	{
+		//加载实体类
+		$this->aliasDoctrine->requireEntity($delete);
+		if(empty($delete) || empty($alias)) return FALSE;
+		$this->qb->delete($delete,$alias);
+		return $this->qb->getQuery()->execute();
+	}
+	/**
 	 * 构建from字段
 	 * @param $from array(实体类名称,别名)
 	 * @return no return
 	 */
 	private function from($from=array())
 	{
-	    //加载实体类
-        $this->aliasDoctrine->requireEntity($from[0]);
+		//加载实体类
+		$this->aliasDoctrine->requireEntity($from[0]);
 		$this->qb->from($from[0],$from[1]);
 	}
 	/**
@@ -117,6 +166,24 @@ class QueryBuilder
 	private function select($select)
 	{
 		$this->qb->select($select);
+	}
+	/**
+	 * 构建左关联查询语句
+	 */
+	private function join($join)
+	{
+		$this->qb->leftJoin($join[0], $join[1], 'WITH', $join[2]);
+	}
+	/**
+	 * 执行查询
+	 * @return array 二维数组
+	 */
+	private function query()
+	{
+		$data = $this->qb->getQuery()->getArrayResult();
+		unset($this->qb);
+		$this->qb = $this->aliasDoctrine->em->createQueryBuilder();
+		return $data;
 	}
 	/**
 	 * 构建where条件
@@ -133,7 +200,7 @@ class QueryBuilder
 	 * $where['t.id'] = array('between',array(1,10)[,'or']);
 	 * @return no return
 	 */
-	private function where($where=array())
+	public function where(array $where=array())
 	{
 		if(empty($where)) return;
 		//使用Expr类，帮助构建表达式
@@ -150,7 +217,7 @@ class QueryBuilder
 					$this->between($key,$val[1]);
 					continue;
 				}
-				$condition = $expr->andX($expr->$val[0]($key, '?'.$i));
+				$condition = $expr->andX($expr->{$val[0]}($key, '?'.$i));
 				$this->qb->andWhere($condition);
 			}else
 			{
@@ -163,11 +230,11 @@ class QueryBuilder
 							$this->between($key,$val[1],$val[2]);
 							continue;
 						}
-						$condition = $expr->orX($expr->$val[0]($key, '?'.$i));
+						$condition = $expr->orX($expr->{$val[0]}($key, '?'.$i));
 						$this->qb->orWhere($condition);
 						break;
 					default:
-						$condition = $expr->$val[2]($expr->$val[0]($key, '?'.$i));
+						$condition = $expr->$val[2]($expr->{$val[0]}($key, '?'.$i));
 						$this->qb->andWhere($condition);
 						break;
 				}
@@ -175,6 +242,7 @@ class QueryBuilder
 			//绑定参数
 			$this->qb->setParameter($i,$val[1]);
 		}
+		return $this;
 	}
 	/**
 	 * 构建between语句
@@ -196,16 +264,9 @@ class QueryBuilder
 	/**
 	 * 构建 order by 语句
 	 */
-	private function orderBy($order)
+	public function orderBy($order)
 	{
 		$this->qb->orderBy($order[0],$order[1]);
-	}
-	/**
-	 * 构建左关联查询语句
-	 */
-	private function join($join)
-	{
-		$this->qb->leftJoin($join[0], $join[1], 'WITH', $join[2]);
 	}
 	/**
 	 * 构建innerJoin语句
@@ -217,14 +278,14 @@ class QueryBuilder
 	/**
 	 * 构建offset语句
 	 */
-	private function offset($offset=0)
+	public function offset($offset=0)
 	{
 		$this->qb->setFirstResult(intval($offset));
 	}
 	/**
 	 * 构建limit语句
 	 */
-	private function limit($limit=20)
+	public function limit($limit=20)
 	{
 		$this->qb->setMaxResults(intval($limit));
 	}
@@ -237,32 +298,21 @@ class QueryBuilder
 	}
 	/**
 	 * 执行查询
-	 * @return array 二维数组
-	 */
-	private function query()
-	{
-	    $data = $this->qb->getQuery()->getArrayResult();
-        unset($this->qb);
-        $this->qb = $this->aliasDoctrine->em->createQueryBuilder();
-        return $data;
-	}
-	/**
-	 * 执行查询
 	 * @return array 数组下是一个一个对象，对象属性需使用getter方法获取
 	 */
 	public function getObjectResult()
 	{
-        return $this->qb->getQuery()->getResult();
+		return $this->qb->getQuery()->getResult();
 	}
 
-    /**
-     * 析构函数
-     */
+	/**
+	 * 析构函数
+	 */
 	public function __destruct()
-    {
-        unset($this->CI,$this->qb,$this->aliasDoctrine);
-    }
+	{
+		unset($this->CI,$this->qb,$this->aliasDoctrine);
+	}
 }
 
-/* End of file welcome.php */
-/* Location: ./application/controllers/welcome.php */
+/* End of file QueryBuilder.php */
+/* Location: ./application/libraries/QueryBuilder.php */

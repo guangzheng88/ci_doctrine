@@ -3,7 +3,7 @@
     <testsuites>
         <testsuite name="ljorder">
             <!-- file：单独设置测试文件 -->
-            <file>../controllers/promotionalActivities/promotionalActivitiesGetTest.php</file>
+            <file>../controllers/demoGetTest.php</file>
         </testsuite>
     </testsuites>
     <filter>

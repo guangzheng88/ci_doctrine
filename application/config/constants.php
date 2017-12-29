@@ -86,23 +86,14 @@ defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest auto
 
 /* 以下为项目自定义常量 */
 
-//默认数据库配置 db_ljlj
+//默认数据库配置
 $dbConfig['default'] = array(
-    'host' => 'localhost',
-    'user' => 'common',
-    'password' => 'common',
-    'dbname' => 'db_ljlj',
-    'entityPath'=>'db_ljlj',
-    'charset' => 'utf8'
-);
-//db_h5数据库配置
-$dbConfig['db_h5'] = array(
-    'host' => 'localhost',
-    'user' => 'common',
-    'password' => 'common',
-    'dbname' => 'db_h5',
-    'entityPath'=>'db_h5',
-    'charset' => 'utf8'
+	'host' => 'localhost',
+	'user' => 'common',
+	'password' => 'common',
+	'dbname' => 'db_ljlj',
+	'entityPath'=>'db_ljlj',
+	'charset' => 'utf8'
 );
 //数据库配置信息
 define('DB_CONFIG',json_encode($dbConfig));
@@ -110,7 +101,3 @@ define('DB_CONFIG',json_encode($dbConfig));
 define('IS_DEVMODE','true');
 //是否打印出执行的sql语句
 define('SET_LOG','0');
-//项目url
-define('BASE_URL', 'http://localhost:8019/');
-//移动专题url
-define('MOBILE_TOPIC_URL','http://192.168.9.141:8013/');
